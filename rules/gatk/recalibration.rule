@@ -1,0 +1,39 @@
+rule BQSR_table:
+    input:
+        ref = REFGENOME,
+        bam = '{sample}.addrg_reads.bam',
+        g1000 = G1000,
+        mills = MILLS,
+        dbsnp = DB_SNP,
+        dictfile = '%s.dict' % REFGENOME[:-3]
+    output:
+        "{sample}.realigned.bam.table"
+    log:
+        LOG
+    params:
+        cpu = CPU,
+        bqsr = BQSR,
+    shell:
+        """
+        echo "Analyzing covariation"
+        java -jar {GATK} -T BaseRecalibrator -R {input.ref} -I {input.bam} -knownSites {input.g1000} -knownSites {input.mills} -knownSites {input.dbsnp} -o {output} -nct {params.cpu} {params.bqsr}
+        echo "BQSR done"
+        """
+
+rule print_reads:
+    input:
+        ref = REFGENOME,
+        bam = '{sample}.addrg_reads.bam',
+        bqsr = "{sample}.realigned.bam.table"
+    output:
+        "{sample}.recall.bam"
+    log:
+        LOG
+    params:
+        cpu = CPU
+    shell:
+        """
+        echo "Writing recalibrated BAM"
+        java -jar {GATK} -T PrintReads -R {input.ref} -I {input.bam} -BQSR {input.bqsr} -o {output} --validation_strictness LENIENT -nct {params.cpu}
+        echo "BQSR done"
+        """

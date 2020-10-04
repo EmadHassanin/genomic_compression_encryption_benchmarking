@@ -1,0 +1,5 @@
+rule platypus:
+        input:rules.print_reads.out
+        output:{samples}.platypus.vcf
+        shell:
+                python {PLATYPUS}/platypus.py callVariants --bamFiles={input} --refFile={REFGENOME} --output={output}

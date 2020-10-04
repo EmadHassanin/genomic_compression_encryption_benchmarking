@@ -1,0 +1,25 @@
+rule haplotype_caller:
+    input:
+        ref = REFGENOME,
+        chrm = CHRNUMBER,
+        recal = "{sample}.recal.bam",
+        dbsnp = DB_SNP
+    output:
+        l = "{sample}.g.vcf.list",
+        gvcf = "{sample}.final.g.vcf.gz",
+        gz = "{sample}.final.vcf.gz"
+    log:
+        LOG
+    params:
+        cpu = CPU,
+        tmpdir = TMPDIR
+    shell:
+        """
+        echo "Making gVCF files"
+        cores=$(expr $(({params.cpu}/2))) # only use half of the cores because it causes a lot of I/O
+        cat {input.chrm} | parallel --gnu -j$cores "java -jar {GATK}  -R {input.ref} -T HaplotypeCaller --emitRefConfidence GVCF --max_alternate_alleles 16 -I {input.recal} -L chr{{}} -o {wildcards.sample}.chr{{}}.g.vcf --dbsnp {input.dbsnp}"
+        rm -rf {wildcards.sample}.g.vcf.list && for a in $(cat {input.chrm}); do ls {wildcards.sample}.chr$a.g.vcf >> {output.l}; done
+        java -jar {GATK} -Djava.io.tmpdir={params.tmpdir}/javatempdir org.broadinstitute.java -jar {GATK}.tools.CatVariants -R {input.ref} -V {output.l} -out {output.gvcf} -assumeSorted
+        cat {output.l} | parallel --gnu "rm -rf {{}}"
+        java -jar {GATK} -T GenotypeGVCFs -R {input.ref} -V {output.gvcf} -o {output.gz} --max_alternate_alleles 16 -nt {params.cpu}
+        """

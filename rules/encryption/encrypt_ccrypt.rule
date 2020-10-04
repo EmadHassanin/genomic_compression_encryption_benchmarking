@@ -1,0 +1,32 @@
+rule encrypt_ccrypt:
+    params:
+        ref = config["ref"],
+    input:
+        expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+        key = "{sample}.key",
+        bam = "%s/{sample}.bam" % config["bucket"]
+    output: 
+        cpt = "Compression/output/{sample}.cpt",
+    benchmark:
+        "Compression/benchmarks/encrypt_cpt-{sample}.txt"
+    log:
+        "Compression/logs/encrypt_cpt-{sample}.log"
+    shell:
+         """ 
+         ccrypt -e -k {input.key} < {input.bam} > {output.cpt} 
+         """
+rule compress_ccrypt_md5sum:
+    input:
+         expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+         bam = "%s/{sample}.bam" % config["bucket"],
+         ccrypt = "Compression/output/{sample}.cpt",
+    output: 
+         md5sum = "Compression/checksums/{sample}-ccrypt.md5sum",
+         size = "Compression/size/{sample}-ccrypt.size",
+    shell:
+         """ 
+         md5sum {input.bam} > {output.md5sum}
+         md5sum {input.ccrypt} >> {output.md5sum}
+	 ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' > {output.size}
+	 ls -ltrh {input.ccrypt} | awk '{{ print $5  " " $9 }}' >> {output.size}
+         """

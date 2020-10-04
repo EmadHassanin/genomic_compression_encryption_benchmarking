@@ -1,0 +1,73 @@
+rule decompress_scramble:
+    params:
+        ref = config["ref"],
+    input:
+        scramble = "Compression/output/{sample}.{thread}.scr",
+        scr3 = "Compression/checkpoints/{sample}.{thread}.scr3.done"
+    output: 
+        scr4 = "Compression/checkpoints/{sample}.{thread}.scr4.done",
+        bam = temp("Compression/tmp/scramble/{sample}.{thread}.bam"),
+    benchmark:
+        "Compression/benchmarks/decompress_scramble-{sample}.{thread}.txt"
+    log:
+        "Compression/logs/decompress_scramble-{sample}.{thread}.log"
+    shell:
+        """ 
+        scramble -I cram -O bam -t {wildcards.thread} -r {params.ref} {input.scramble} > {output.bam} 2> {log}
+        touch {input.scr3}
+        touch {output.scr4}
+        """
+rule decompress_scramble_bz2:
+    params:
+        ref = config["ref"],
+    input:
+        scramble = "Compression/output/bz2-{sample}.{thread}.scr",
+        scr4 = "Compression/checkpoints/{sample}.{thread}.scr4.done",
+    output: 
+        scr5 = "Compression/checkpoints/{sample}.{thread}.scr5.done",
+        bam = temp("Compression/tmp/scramble/{sample}-bz2.{thread}.bam"),
+    benchmark:
+        "Compression/benchmarks/decompress_scramble-bz2-{sample}.{thread}.txt"
+    log:
+        "Compression/logs/decompress_scramble-bz2-{sample}.{thread}.log"
+    shell:
+        """ 
+        scramble -I cram -O bam -t {wildcards.thread} -r {params.ref} {input.scramble} > {output.bam} 2> {log}
+        touch {input.scr4}
+        touch {output.scr5}
+        """
+rule decompress_scramble_md5sum:
+    params:
+        final_tmp = config['finaldir'],
+        final_tmp2 = config['finaldir']+"/"+"scramble"
+    input:
+        bam = "Compression/tmp/scramble/{sample}.{thread}.bam",
+        bam1 = "Compression/tmp/scramble/{sample}-bz2.{thread}.bam",
+        scramble = "Compression/output/{sample}.{thread}.scr",
+        scramble2 = "Compression/output/bz2-{sample}.{thread}.scr",
+      # md5sum = "Compression/checksums/{sample}.{thread}-scr.md5sum",
+        size = "Compression/size/{sample}.{thread}.scr.size",
+        scr5 = "Compression/checkpoints/{sample}.{thread}.scr5.done"
+    output: 
+        done = "Compression/checkpoints/{sample}.{thread}-scramble.done",
+       # outscramble = config["finaldir"]+"/"+"{sample}.{thread}.scr",
+       # outscramble2 = config["finaldir"]+"/"+"bz2-{sample}.{thread}.scr",
+       # outscramble3 = config["finaldir"]+"/"+"scramble"+"/"+"{sample}.{thread}.bam",
+       # outscramble4 = config["finaldir"]+"/"+"scramble"+"/"+"{sample}-bz2.{thread}.bam",
+    shell:
+        """ 
+	ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' >> {input.size}
+	ls -ltrh {input.bam1} | awk '{{ print $5  " " $9 }}' >> {input.size}
+        touch {input.scr5}
+        touch {output.done}
+        """ 
+        #md5sum {input.bam} >> {input.md5sum}
+        #md5sum {input.bam1} >> {input.md5sum}
+        #mv {input.scramble} {params.final_tmp}
+        #mv {input.scramble2} {params.final_tmp}
+        #mv {input.bam} {params.final_tmp2}
+        #mv {input.bam1} {params.final_tmp2}
+	#rclone touch {output.outscramble}
+	#rclone touch {output.outscramble2}
+	#rclone touch {output.outscramble3}
+	#rclone touch {output.outscramble4}

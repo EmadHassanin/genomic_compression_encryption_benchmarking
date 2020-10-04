@@ -1,0 +1,15 @@
+rule compress_cram_object:
+    params:
+        BUCKET=config["bucket"],
+        NAMESPACE=config["namespace"],
+        REF=config["ref"],
+        BAM=config["samples"],
+    output: 
+        CRAM="{sample}.cram",
+    benchmark:
+        "benchmarks/compress_cram-{sample}.txt"
+    shell:
+         """ 
+         oci os object get -ns {params.NAMESPACE} -bn {params.BUCKET} --name {params.BAM} --file - | \
+         cramtools cram -R {params.REF} > {output.CRAM}
+         """

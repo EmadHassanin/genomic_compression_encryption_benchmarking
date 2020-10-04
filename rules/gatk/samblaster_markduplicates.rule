@@ -1,0 +1,7 @@
+rule samblaster_markduplicates:
+    input:
+	rule.sort.output
+    output:
+	{sample}.samblaster.marked.bam
+    shell:
+	SAMBLASTER

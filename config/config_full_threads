@@ -1,0 +1,36 @@
+infrastructure: "oci"
+bucket: "Data"
+namespace: "megeno"
+ref: "/references/human_g1k_v37_decoy.fasta"
+finaldir: "/home/Archive/Data/results"
+data_steward: "Megeno"
+
+# These are the settings for benchmarking threads
+samples:
+    - "simonsSS6004478.srt.aln"
+threads:
+    - 1
+    - 2
+    #- 4 # This is commented out because it is tested in the standard config_full
+    - 8
+    - 16
+
+# These were written to dynamically add tools into the pipeline. Did not test it yet.
+tools:
+    - "cram"
+    - "petagene"
+    - "pprotect"
+    - "quip"
+    - "deez"
+    - "scramble"
+    - "gzip"
+    - "bzip2"
+    - "cryfa"
+    - "c4gh"
+    - "zip"
+    - "cpt"
+    - "dat"
+    - "gpg"
+    - "pigz"
+    - "pbzip2"
+    - "lz4"

@@ -1,0 +1,31 @@
+rule compress_lz4:
+    input:
+        bam = "%s/{sample}.bam" % config["bucket"]
+    output: 
+        lz4 = temp("Compression/output/{sample}.{threads}.bam.lz4"),
+    benchmark:
+        "Compression/benchmarks/compress_lz4.{sample}.txt"
+    log:
+        "Compression/logs/compress_lz4.{sample}.log"
+    shell:
+         """ 
+	 lz4 -9 -c {input.bam}  > {output.lz4}
+         """
+
+rule compress_lz4_md5sum:
+    input:
+         expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+         bam = "%s/{sample}.bam" % config["bucket"],
+         lz4 = "Compression/output/{sample}.{thread}.bam.lz4",
+    output: 
+         md5sum = "Compression/checksums/{sample}.{thread}.lz4.md5sum",
+         size = "Compression/size/{sample}.{thread}.lz4.size",
+    shell:
+         """ 
+	 ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' > {output.size}
+	 ls -ltrh {input.lz4} | awk '{{ print $5  " " $9 }}' >> {output.size}
+
+         md5sum {input.bam} > {output.md5sum}
+         md5sum {input.lz4} >> {output.md5sum}
+         """
+

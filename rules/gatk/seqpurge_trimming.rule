@@ -1,0 +1,9 @@
+rule seqpurge_trimming:
+	input:
+		fq1 = FQ[0],
+        	fq2 = FQ[1]
+	output:
+		trimfq1=FQ[0].trimmed.fq1.gz
+		trimfq2=FQ[1].trimmed.fq2.gz
+	shell:
+		SEQPURGE -in1 {input.fq1} -in2 {input.fq2} -out1 {output.trimfq1} -out2 {output.trimfq2}

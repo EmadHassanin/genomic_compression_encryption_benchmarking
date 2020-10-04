@@ -1,0 +1,42 @@
+rule decompress_quip:
+    params:
+        ref = config["ref"],
+    input:
+        quip = "Compression/output/{sample}.qp",
+    output:
+        bam = temp("Compression/tmp/quip/{sample}.bam"),
+        movingdone = "Compression/checkpoints/{sample}.quip.moving.done",
+    benchmark:
+        "Compression/benchmarks/decompress_quip-{sample}.txt"
+    log:
+        "Compression/logs/decompress_quip-{sample}.log"
+    shell:
+        """
+        quip {input.quip} --output=bam -d -c > {output.bam}
+        touch {output.movingdone}
+	"""
+rule decompress_quip_md5sum:
+    params:
+        final_tmp = config['finaldir'],
+        final_tmp2 = config['finaldir']+"/"+"gzip,"
+    input:
+        bam = "Compression/tmp/quip/{sample}.bam",
+        quip = "Compression/output/{sample}.qp",
+       # md5sum = "Compression/checksums/{sample}.qp.md5sum",
+        size = "Compression/size/{sample}.qp.size",
+        movingdone = "Compression/checkpoints/{sample}.quip.moving.done",
+    output: 
+        done = "Compression/checkpoints/{sample}.quip.done",
+        #outquip = config["finaldir"]+"/"+"{sample}.qp",
+        #outquip2 = config["finaldir"]+"/"+"quip"+"/"+"{sample}.bam",
+    shell:
+        """ 
+        ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' >> {input.size}
+        touch {input.movingdone}
+        touch {output.done}
+        """ 
+        #md5sum {input.bam} >> {input.md5sum}
+        #mv {input.quip} {params.final_tmp}
+        #mv {input.bam} {params.final_tmp2}
+	#rclone touch {output.outquip}
+	#rclone touch {output.outquip2}

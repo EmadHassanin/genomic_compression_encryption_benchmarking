@@ -1,0 +1,12 @@
+rule add_read_group_info:
+    input:
+        '{sample}.marked.bam'
+    output:
+        '{sample}.addrg_reads.bam'
+    log:
+        LOG
+    shell:
+        """
+        echo "Adding read group info"
+        java -jar PICARD AddOrReplaceReadGroups INPUT={input} OUTPUT={output} RGID={wildcards.sample} RGLB={wildcards.sample} RGPL=illumina RGPU={wildcards.sample} RGSM={wildcards.sample} CREATE_INDEX=true
+        """

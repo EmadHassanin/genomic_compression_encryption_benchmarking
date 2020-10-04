@@ -1,0 +1,14 @@
+name: compression
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+  - hcc
+dependencies:
+  - snakemake=3.13.3=py36_0
+  - cramtools=3.0.b127=2
+  - rclone=1.44=0
+  - samtools=1.9=h91753b0_8
+  - sambamba=0.6.6=2
+  - picard=2.20.2=0
+  - gatk4==4.1.4.1

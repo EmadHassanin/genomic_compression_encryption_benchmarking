@@ -1,0 +1,11 @@
+rule unmount_object:
+    input: 
+        expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+        "Compression/checkpoints/cram.done",
+        "Compression/checkpoints/petagene.done"
+    output: 
+        expand("Compression/checkpoint/unmounted_{bucket}_bucket.done", bucket = config["bucket"])
+    shell:
+        """
+        umount {input}
+        """

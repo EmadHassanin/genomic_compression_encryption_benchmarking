@@ -1,0 +1,38 @@
+rule decrypt_zip:
+    params:
+        ref = config["ref"],
+        final_tmp = config['finaldir']
+	
+    input: 
+        key = "{sample}.key",
+        zip  = "Compression/output/{sample}.zip",
+    output: 
+        bam = "Compression/tmp/zip/{sample}.bam",
+        movingdone = "Compression/checkpoints/{sample}.zip.moving.done",
+        outzip = config["finaldir"]+"/"+"{sample}.zip"
+    benchmark:
+        "Compression/benchmarks/decrypt_zip-{sample}.txt"
+    log:
+        "Compression/logs/decrypt_zip-{sample}.log"
+    shell:
+        """ 
+	unzip -cP {input.key} {input.zip} > {output.bam}      
+        mv {input.zip} {params.final_tmp}
+        touch {output.movingdone}
+	rclone touch {output.outzip}
+        """
+rule decompress_zip_md5sum:
+    input:
+        bam = "Compression/tmp/zip/{sample}.bam",
+        md5sum = "Compression/checksums/{sample}-zip.md5sum",
+        size = "Compression/size/{sample}-zip.size",
+        movingdone = "Compression/checkpoints/{sample}.zip.moving.done",
+    output: 
+        done = "Compression/checkpoints/{sample}-zip.done"
+    shell:
+        """ 
+        md5sum {input.bam} >> {input.md5sum}
+	ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' >> {input.size}
+        touch {input.movingdone}
+        touch {output.done}
+        """

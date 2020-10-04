@@ -1,0 +1,38 @@
+rule decrypt_gnupg:
+    params:
+        ref = config["ref"],
+        final_tmp = config['finaldir']
+	
+    input: 
+        key = "{sample}.key",
+        gnupg = "Compression/output/{sample}.gpg",
+    output: 
+        bam = "Compression/tmp/gnupg/{sample}.bam",
+        movingdone = "Compression/checkpoints/{sample}.gpg.moving.done",
+        outgpg = config["finaldir"]+"/"+"{sample}.gpg"
+    benchmark:
+        "Compression/benchmarks/decrypt_gnupg-{sample}.txt"
+    log:
+        "Compression/logs/decrypt_gnupg-{sample}.log"
+    shell:
+        """ 
+        gpg --yes --batch --passphrase-file={input.key} --output {output.bam} -d {input.gnupg}
+        mv {input.gnupg} {params.final_tmp}
+        touch {output.movingdone}
+	rclone touch {output.outgpg}
+        """
+rule decompress_gnupg_md5sum:
+    input:
+        bam = "Compression/tmp/gnupg/{sample}.bam",
+        md5sum = "Compression/checksums/{sample}-gnupg.md5sum",
+        size = "Compression/size/{sample}-gnupg.size",
+        movingdone = "Compression/checkpoints/{sample}.gpg.moving.done",
+    output: 
+        done = "Compression/checkpoints/{sample}-gnupg.done"
+    shell:
+        """ 
+        md5sum {input.bam} >> {input.md5sum}
+	ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' >> {input.size}
+        touch {input.movingdone}
+        touch {output.done}
+        """ 

@@ -1,0 +1,14 @@
+rule mount_object:
+    params: 
+        infrastructure = config["infrastructure"],
+        bucket = config["bucket"]
+    output: 
+        expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+    shell:
+         """
+         mkdir -f Archive/{params["bucket"]}
+
+         rclone mount {params["infrastructure"]}:{params["bucket"]} {output} --daemon
+
+         mkdir -f Archive/{params["bucket"]}/Compression
+         """

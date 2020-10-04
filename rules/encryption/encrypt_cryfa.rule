@@ -1,0 +1,41 @@
+rule generate_symmetric_key:
+    input:
+        bam = "%s/{sample}.bam" % config["bucket"]
+    output:
+        "{sample}.key"
+    shell:
+        """
+        openssl rand -base64 128 > {output}
+        """ 
+rule encrypt_cryfa:
+    params:
+        ref = config["ref"],
+    input:
+        expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+        key = "{sample}.key",
+        bam = "%s/{sample}.bam" % config["bucket"]
+    output: 
+        cryfa = "Compression/output/{sample}.{thread}.cryfa",
+    benchmark:
+        "Compression/benchmarks/encrypt_cryfa-{sample}.{thread}.txt"
+    log:
+        "Compression/logs/encrypt_cryfa-{sample}.{thread}.log"
+    shell:
+         """ 
+	 cryfa -f -s -k {input.key} -t {wildcards.thread} {input.bam} > {output.cryfa}
+         """
+rule compress_cryfa_md5sum:
+    input:
+         expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+         bam = "%s/{sample}.bam" % config["bucket"],
+         cryfa = "Compression/output/{sample}.{thread}.cryfa",
+    output: 
+         md5sum = "Compression/checksums/{sample}.{thread}-cryfa.md5sum",
+         size = "Compression/size/{sample}.{thread}-cryfa.size",
+    shell:
+         """ 
+         md5sum {input.bam} > {output.md5sum}
+         md5sum {input.cryfa} >> {output.md5sum}
+	 ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' > {output.size}
+	 ls -ltrh {input.cryfa} | awk '{{ print $5  " " $9 }}' >> {output.size}
+         """

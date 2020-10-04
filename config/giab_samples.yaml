@@ -1,0 +1,20 @@
+infrastructure: "oci"
+bucket: "Data/ENA/PRJEB3381"
+namespace: "megeno"
+ref: "/home/reference_files/human_reference/hg19.fasta"
+finaldir: "/home/Archive/Data/results"
+threads: 
+        - 8
+samples:
+        #        - "NA12877_S1"
+        #       - "NA12878_S1"
+        #        - "NA12889_S1"
+        - "NA12890_S1"
+          #        - "NA12891_S1"
+          #        - "NA12892_S1"
+tools:
+    - "cram"
+    - "petagene"
+    - "quip"
+    - "deez"
+    - "scramble"

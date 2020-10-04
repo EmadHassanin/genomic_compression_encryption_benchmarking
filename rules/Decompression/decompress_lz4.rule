@@ -1,0 +1,41 @@
+rule decompress_lz4:
+    params:
+        ref = config["ref"],
+    input:
+        lz4 = "Compression/output/{sample}.{thread}.bam.lz4",
+    output: 
+        bam = temp("Compression/tmp/lz4/{sample}.{thread}.bam"),
+    benchmark:
+        "Compression/benchmarks/decompress_lz4-{sample}.{thread}.txt"
+    log:
+        "Compression/logs/decompress_lz4-{sample}.{thread}.log"
+    shell:
+        """ 
+        lz4 -d {input.lz4} {output.bam}
+        """
+
+rule decompress_lz4_md5sum:
+    input:
+        bam = "Compression/tmp/lz4/{sample}.{thread}.bam",
+        lz4 = "Compression/output/{sample}.{thread}.bam.lz4",
+        size = "Compression/size/{sample}.{thread}.lz4.size",
+        md5sum = "Compression/checksums/{sample}.{thread}.lz4.md5sum",
+    output: 
+        done = "Compression/checkpoints/{sample}.{thread}.lz4.done",
+        compressed = config["finaldir"]+"/"+"lz4"+"/"+"compressed"+"/"+"{sample}.{thread}.bam.lz4",
+        decompressed = config["finaldir"]+"/"+"lz4"+"/"+"decompressed"+"/"+"{sample}.{thread}.bam",
+
+    shell:
+        """ 
+        ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' >> {input.size}
+
+	md5sum {input.bam} >> {input.md5sum}
+
+        cp {input.lz4} {output.compressed}
+        cp {input.bam} {output.decompressed}
+
+	rclone touch {output.compressed}
+	rclone touch {output.decompressed}
+
+        touch {output.done} 
+        """ 

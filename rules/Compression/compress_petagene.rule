@@ -1,0 +1,92 @@
+#rule compress_petagene_md5:
+#    params:
+#        tmp = "Compression/output"
+#    input:
+#        expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+#        bam = "%s/{sample}.bam" % (config["bucket"])
+#    output: 
+#        pgdone1 = "Compression/checkpoints/{sample}.{thread}.pgbam1.done",
+#        
+#    benchmark:
+#        "Compression/benchmarks/compress_petagene-md5-{thread}.{sample}.txt"
+#    log:
+#        "Compression/logs/compress_petagene-{sample}.{thread}.log"
+#    shell:
+#        """ 
+#
+#        petasuite --md5match -t {wildcards.thread} -c {input.bam} -D {params.tmp} > {log}
+#       
+#        touch {output.pgdone1} 
+#        """
+#
+#rule mv_compress_petagene_md5:
+#    input:
+#        pgdone1 = "Compression/checkpoints/{sample}.{thread}.pgbam1.done",
+#    output: 
+#        pgdone2 = "Compression/checkpoints/{sample}.{thread}.pgbam2.done",
+#        pgbam2 = temp("Compression/output/{sample}.{thread}.pgbam"),
+#    shell:
+#        """ 
+#        DIRNAME=$(dirname {output.pgbam2})
+#        mv $DIRNAME/{wildcards.sample}.pgbam {output.pgbam2} 
+#        touch {input.pgdone1} 
+#        touch {output.pgdone2} 
+#        """
+
+rule compress_petagene_nomd5:
+    params:
+        tmp = "Compression/output"
+    input:
+        expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+        bam = "%s/{sample}.bam" % (config["bucket"]),
+        #pgdone2 = "Compression/checkpoints/{sample}.{thread}.pgbam2.done",
+    output: 
+        pgdone3 = "Compression/checkpoints/{sample}.{thread}.pgbam3.done",
+    benchmark:
+        "Compression/benchmarks/compress_petagene-nomd5-{thread}.{sample}.txt"
+    log:
+        "Compression/logs/compress_petagene-{sample}.{thread}.log"
+    shell:
+        """ 
+        petasuite -t {wildcards.thread} -c {input.bam} -D {params.tmp} > {log}
+        
+        touch {output.pgdone3} 
+        """
+        #touch {input.pgdone2} 
+
+rule mv_compress_petagene_nomd5:
+    input:
+        pgdone3 = "Compression/checkpoints/{sample}.{thread}.pgbam3.done",
+    output: 
+        pgbam_nomd5 = temp("Compression/output/{sample}.{thread}.nomd5.pgbam"),
+        pgdone4 = "Compression/checkpoints/{sample}.{thread}.pgbam4.done",
+    shell:
+        """ 
+        DIRNAME=$(dirname {output.pgbam_nomd5})
+        mv $DIRNAME/{wildcards.sample}.pgbam {output.pgbam_nomd5} 
+        touch {input.pgdone3} 
+        touch {output.pgdone4} 
+        """
+
+rule compress_petagene_md5sum:
+    input:
+         expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+         bam = "%s/{sample}.bam" % config["bucket"],
+        #pgbam = "Compression/output/{sample}.{thread}.pgbam",
+         pgbam_nomd5 = "Compression/output/{sample}.{thread}.nomd5.pgbam",
+         pgdone4 = "Compression/checkpoints/{sample}.{thread}.pgbam4.done",
+    output: 
+         size = "Compression/size/{sample}.{thread}.petagene.size",
+         pgdone5 = "Compression/checkpoints/{sample}.{thread}.pgbam5.done",
+         #md5sum = "Compression/checksums/{sample}.{thread}.petagene.md5sum",
+    shell:
+         """ 
+	 ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' > {output.size}
+	 ls -ltrh {input.pgbam_nomd5} | awk '{{ print $5  " " $9 }}' >> {output.size}
+         touch {output.pgdone5} 
+         """
+
+	 #ls -ltrh {input.pgbam} | awk '{{ print $5  " " $9 }}' >> {output.size}
+        # md5sum {input.bam} > {output.md5sum}
+        # md5sum {input.pgbam} >> {output.md5sum}
+        #  md5sum {input.pgbam_nomd5} >> {output.md5sum}

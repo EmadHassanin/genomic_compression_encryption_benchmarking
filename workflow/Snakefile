@@ -1,0 +1,77 @@
+# -*- snakemake -*-
+import os
+configfile: 
+    "config.yaml"
+FQ = config['FQ'].split(",")
+BWA = config['BWA']
+MEMORY = config['MEMORY']
+CPU = config['CPU']
+SAMTOOLS = config['SAMTOOLS']
+PICARD = config['PICARD']
+SAMBLASTER = config['SAMBLASTER']
+ABRA = config['ABRA']
+SEQPURGE = config['SEQPURGE']
+GATK = config['GATK']
+FREEBAYES = config['FREEBAYES']
+PLATYPUS = config['PLATYPUS']
+REFGENOME = config['REFGENOME']
+LOG = config['LOG']
+TMPDIR = config['TMPDIR']
+JAVA_XMX = config['JAVA_XMX']
+G1000 = config['G1000']
+MILLS = config['MILLS']
+DB_SNP = config['DB_SNP']
+BQSR = config['BQSR']
+MAIL = config['MAIL']
+REFGENOME=config['REFGENOME']
+RULE_DIR=config['RULE_DIR']
+CHRNUMBER=config['CHRNUMBER']
+#Include rules
+
+#build samtools index
+include:
+	"/work/projects/jpnd_courage/analysis/NGS_comparison/master_pipeline/variant_calling/src/rules/build_samtools_index.rule"
+
+#build bwa index
+include:
+	"/work/projects/jpnd_courage/analysis/NGS_comparison/master_pipeline/variant_calling/src/rules/build_bwa_index.rule"
+
+#alignment
+include:
+	"/work/projects/jpnd_courage/analysis/NGS_comparison/master_pipeline/variant_calling/src/rules/bwa.rule"
+
+#sort the bam file
+include:
+	"/work/projects/jpnd_courage/analysis/NGS_comparison/master_pipeline/variant_calling/src/rules/sort_bam.rule"
+
+#remove duplicate reads from the bam file by using picard and samblaster
+include:
+	"/work/projects/jpnd_courage/analysis/NGS_comparison/master_pipeline/variant_calling/src/rules/mark_duplicates.rule"
+
+#add read group information
+include:
+	"/work/projects/jpnd_courage/analysis/NGS_comparison/master_pipeline/variant_calling/src/rules/add_read_group_info.rule"
+
+#build index 
+include:
+	"/work/projects/jpnd_courage/analysis/NGS_comparison/master_pipeline/variant_calling/src/rules/add_read_group_info_build_bam_index.rule"
+
+# indel realignment by GATK and ABRA
+include:
+	"/work/projects/jpnd_courage/analysis/NGS_comparison/master_pipeline/variant_calling/src/rules/realignment.rule"
+
+# quality score recalibration
+include:
+	"/work/projects/jpnd_courage/analysis/NGS_comparison/master_pipeline/variant_calling/src/rules/recalibration.rule"
+
+#haplotype caller
+include:
+	"/work/projects/jpnd_courage/analysis/NGS_comparison/master_pipeline/variant_calling/src/rules/haplotype_caller.rule"
+
+#free bayes
+include:
+	"/work/projects/jpnd_courage/analysis/NGS_comparison/master_pipeline/variant_calling/src/rules/freebayes.rule"
+
+#platypus
+include:
+	"/work/projects/jpnd_courage/analysis/NGS_comparison/master_pipeline/variant_calling/src/rules/platypus.rule" 

@@ -1,0 +1,60 @@
+rule compress_scramble:
+    params:
+        ref = config["ref"],
+    input:
+        expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+        bam = "%s/{sample}.bam" % config["bucket"]
+    output: 
+        scramble  = temp("Compression/output/{sample}.{thread}.scr"),
+        scr1 = "Compression/checkpoints/{sample}.{thread}.scr1.done"
+    benchmark:
+        "Compression/benchmarks/compress_scramble-{sample}.{thread}.txt"
+    log:
+        "Compression/logs/compress_scramble-{sample}.{thread}.log"
+    shell:
+         """ 
+	 scramble -I bam -O cram -t {wildcards.thread} -r {params.ref} {input.bam} > {output.scramble} 2> {log}
+         touch {output.scr1}
+         """
+rule compress_scramble_bz2:
+    params:
+        ref = config["ref"],
+    input:
+        expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+        bam = "%s/{sample}.bam" % config["bucket"],
+        scr1 = "Compression/checkpoints/{sample}.{thread}.scr1.done"
+    output: 
+        scramble  = temp("Compression/output/bz2-{sample}.{thread}.scr"),
+        scr2 = "Compression/checkpoints/{sample}.{thread}.scr2.done"
+    benchmark:
+        "Compression/benchmarks/compress_scramble-{sample}.{thread}-bz2.txt"
+    log:
+        "Compression/logs/compress_scramble-{sample}.{thread}-bz2.log"
+    shell:
+         """ 
+	 scramble -I bam -O cram -t {wildcards.thread} -j -9 -r {params.ref} {input.bam} > {output.scramble} 2> {log}
+         touch {input.scr1}
+         touch {output.scr2}
+         """
+rule compress_scramble_md5sum:
+    input:
+         expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+         bam = "%s/{sample}.bam" % config["bucket"],
+         scramble  = "Compression/output/{sample}.{thread}.scr",
+         scramble1  = "Compression/output/bz2-{sample}.{thread}.scr",
+         scr2 = "Compression/checkpoints/{sample}.{thread}.scr2.done"
+    output: 
+        # md5sum = "Compression/checksums/{sample}.{thread}-scr.md5sum",
+         size = "Compression/size/{sample}.{thread}.scr.size",
+         scr3 = "Compression/checkpoints/{sample}.{thread}.scr3.done"
+    shell:
+         """ 
+	 ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' > {output.size}
+	 ls -ltrh {input.scramble} | awk '{{ print $5  " " $9 }}' >> {output.size}
+	 ls -ltrh {input.scramble1} | awk '{{ print $5  " " $9 }}' >> {output.size}
+         touch {input.scr2}
+         touch {output.scr3}
+         """
+         #md5sum {input.bam} > {output.md5sum}
+         #md5sum {input.scramble} >> {output.md5sum}
+         #md5sum {input.scramble1} >> {output.md5sum}

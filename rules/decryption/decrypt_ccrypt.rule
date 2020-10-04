@@ -1,0 +1,38 @@
+rule decrypt_ccrypt:
+    params:
+        ref = config["ref"],
+        final_tmp = config['finaldir']
+	
+    input: 
+        key = "{sample}.key",
+        cpt  = "Compression/output/{sample}.cpt",
+    output: 
+        bam = "Compression/tmp/ccrypt/{sample}.bam",
+        movingdone = "Compression/checkpoints/{sample}.cpt.moving.done",
+        outcpt = config["finaldir"]+"/"+"{sample}.cpt"
+    benchmark:
+        "Compression/benchmarks/decrypt_cpt-{sample}.txt"
+    log:
+        "Compression/logs/decrypt_cpt-{sample}.log"
+    shell:
+        """ 
+	ccrypt -k {input.key} {input.cpt} -c > {output.bam}
+        mv {input.cpt} {params.final_tmp}
+        touch {output.movingdone}
+	rclone touch {output.outcpt}
+        """
+rule decrypt_ccrypt_md5sum:
+    input:
+        bam = "Compression/tmp/ccrypt/{sample}.bam",
+        md5sum = "Compression/checksums/{sample}-ccrypt.md5sum",
+        size = "Compression/size/{sample}-ccrypt.size",
+        movingdone = "Compression/checkpoints/{sample}.cpt.moving.done",
+    output: 
+        done = "Compression/checkpoints/{sample}-ccrypt.done"
+    shell:
+        """ 
+        md5sum {input.bam} >> {input.md5sum}
+	ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' >> {input.size}
+        touch {input.movingdone}
+        touch {output.done}
+        """

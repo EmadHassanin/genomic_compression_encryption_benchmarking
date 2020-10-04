@@ -1,0 +1,13 @@
+rule mark_duplicates:
+    input:
+        '{sample}.sorted.bam'
+    output:
+        '{sample}.marked.bam'
+    log:
+        LOG
+    shell:
+        """
+        echo "Marking duplicates"
+        java -jar PICARD MarkDuplicates INPUT={input} OUTPUT={output} METRICS_FILE=metrics REMOVE_DUPLICATES=true CREATE_INDEX=true VALIDATION_STRINGENCY=LENIENT ASSUME_SORTED=TRUE
+        echo "Finally marked duplicates"
+        """

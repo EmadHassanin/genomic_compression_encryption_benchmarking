@@ -1,0 +1,11 @@
+rule build_samtool_index:
+    input:
+        REFGENOME
+    log:
+        LOG
+    output:
+        '%s.fai' % REFGENOME
+    shell:
+        """
+        samtools faidx {input}
+        """

@@ -1,0 +1,14 @@
+sudo yum install java-1.8.0-openjdkinfrastructure: "oci"
+bucket: "Data"
+namespace: "megeno"
+ref: "/references/human_g1k_v37_decoy.fasta"
+threads:
+#    - 1
+     - 2
+#    - 4
+#    - 8
+#    - 16
+samples:
+    - "simonsSS6004478.srt.aln.chr1"
+   #- "simonsSS6004478.srt.aln"
+   #- "RMNISTHS_30xdownsample"

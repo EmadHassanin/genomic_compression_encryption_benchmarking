@@ -1,0 +1,45 @@
+rule decompress_gzip:
+    params:
+        ref = config["ref"],
+    input:
+        gzip = "Compression/output/{sample}.gzip",
+    output: 
+        bam = "Compression/tmp/gzip/{sample}.bam",
+        movingdone = "Compression/checkpoints/{sample}.gzip.moving.done",
+    benchmark:
+        "Compression/benchmarks/decompress_gzip-{sample}.txt"
+    log:
+        "Compression/logs/decompress_gzip-{sample}.log"
+    shell:
+        """ 
+        gzip -d {input.gzip} -c > {output.bam}
+        touch {output.movingdone}
+        """
+
+rule decompress_gzip_md5sum:
+    params:
+       # final_tmp = config['finaldir'],
+       # final_tmp2 = config['finaldir']+"/"+"gzip,"
+    input:
+        bam = "Compression/tmp/gzip/{sample}.bam",
+        gzip = "Compression/output/{sample}.gzip",
+       # md5sum = "Compression/checksums/{sample}.gzip.md5sum",
+        size = "Compression/size/{sample}.gzip.size",
+        movingdone = "Compression/checkpoints/{sample}.gzip.moving.done",
+    output: 
+        done = "Compression/checkpoints/{sample}.gzip.done",
+       # outgzip = config["finaldir"]+"/"+"{sample}.gzip",
+       # outgzip2 = config["finaldir"]+"/"+"gzip"+"/"+"{sample}.bam",
+    shell:
+        """ 
+        ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' >> {input.size}
+        touch {input.movingdone}
+        touch {output.done} 
+        """ 
+        #md5sum {input.bam} >> {input.md5sum}
+        #mv {input.gzip} {params.final_tmp}
+        #mv {input.bam} {params.final_tmp2}
+	#rclone touch {output.outgzip}
+	#rclone touch {output.outgzip2}
+
+

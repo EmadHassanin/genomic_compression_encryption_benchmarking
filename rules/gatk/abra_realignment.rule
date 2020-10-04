@@ -1,0 +1,6 @@
+rule abra_realignment:
+    input: rule.add_read_group_info.output
+    output: {sample}.abra.realigned.bam
+    log: LOG
+    shell:
+	    java -Xmx16g -jar ABRA --no-debug --in {input} --out {output} --threads CPU --working TMPDIR --ref REFGENOME

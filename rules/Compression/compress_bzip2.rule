@@ -1,0 +1,32 @@
+rule compress_bzip2:
+    params:
+        ref = config["ref"],
+    input:
+        expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+        bam = "%s/{sample}.bam" % config["bucket"]
+    output: 
+        bzip2 = temp("Compression/output/{sample}.bzip2"),
+    benchmark:
+        "Compression/benchmarks/compress_bzip2-{sample}.txt"
+    log:
+        "Compression/logs/compress_bzip2-{sample}.log"
+    shell:
+         """ 
+	 bzip2 -k  {input.bam} -c > {output.bzip2}
+         """
+
+rule compress_bzip2_md5sum:
+    input:
+         expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+         bam = "%s/{sample}.bam" % config["bucket"],
+         bzip2 = "Compression/output/{sample}.bzip2",
+    output: 
+         md5sum = "Compression/checksums/{sample}.bzip2.md5sum",
+         size = "Compression/size/{sample}.bzip2.size",
+    shell:
+         """ 
+         md5sum {input.bam} > {output.md5sum}
+         md5sum {input.bzip2} >> {output.md5sum}
+	 ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' > {output.size}
+	 ls -ltrh {input.bzip2} | awk '{{ print $5  " " $9 }}' >> {output.size}
+         """

@@ -1,0 +1,33 @@
+
+rule encrypt_zip:
+    params:
+        ref = config["ref"],
+    input:
+        expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+        key = "{sample}.key",
+        bam = "%s/{sample}.bam" % config["bucket"]
+    output: 
+        zip = "Compression/output/{sample}.zip",
+    benchmark:
+        "Compression/benchmarks/encrypt_zip-{sample}.txt"
+    log:
+        "Compression/logs/encrypt_zip-{sample}.log"
+    shell:
+         """ 
+	 zip --encrypt --password {input.key} {output.zip} {input.bam} 
+         """
+rule compress_zip_md5sum:
+    input:
+         expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+         bam = "%s/{sample}.bam" % config["bucket"],
+         zip = "Compression/output/{sample}.zip",
+    output: 
+         md5sum = "Compression/checksums/{sample}-zip.md5sum",
+         size = "Compression/size/{sample}-zip.size",
+    shell:
+         """ 
+         md5sum {input.bam} > {output.md5sum}
+         md5sum {input.zip} >> {output.md5sum}
+	 ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' > {output.size}
+	 ls -ltrh {input.zip} | awk '{{ print $5  " " $9 }}' >> {output.size}
+         """

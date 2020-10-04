@@ -1,0 +1,45 @@
+rule compress_pprotect:
+    params:
+        tmp = "Compression/output"
+    input:
+        bam = "%s/{sample}.bam" % config["bucket"]
+    output: 
+        pprotect = temp("Compression/output/{sample}.{thread}.pgbam_p"),
+        #pprotectbai = temp("Compression/output/{sample}.{thread}.pgbai"),
+    benchmark:
+        "Compression/benchmarks/compress_pprotect.{sample}.txt"
+    log:
+        "Compression/logs/compress_pprotect.{sample}.log"
+    shell:
+         """ 
+         petasuite -t {wildcards.thread} --compress --encrypt --species none --datasteward {config[data_steward]} -D {params.tmp} {input.bam} > {log}
+
+
+         ls /home/Archive/{input.bam} | rev | cut -f 1 -d"/" | rev | sed -e 's/.bam$//g' | xargs -I {{}} mv Compression/output/{{}}.pgbam_p {output.pprotect}
+
+         """
+
+# Stashed commands
+#         ls /home/Archive/{input.bam} | rev | cut -f 1 -d"/" | rev | sed -e 's/.bam$//g' | xargs -I {{}} touch Compression/output/{{}}.pgbam_p
+
+#         ls /home/Archive/{input.bam} | rev | cut -f 1 -d"/" | rev | sed -e 's/.bam$//g' | xargs -I {{}} touch Compression/output/{{}}.pgbai
+
+#         ls /home/Archive/{input.bam} | rev | cut -f 1 -d"/" | rev | sed -e 's/.bam$//g' | xargs -I {{}} mv Compression/output/{{}}.pgbai {output.pprotectbai}
+
+rule compress_pprotect_md5sum:
+    input:
+         expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+         bam = "%s/{sample}.bam" % config["bucket"],
+         pprotect = "Compression/output/{sample}.{thread}.pgbam_p",
+    output: 
+         md5sum = "Compression/checksums/{sample}.{thread}.pprotect.md5sum",
+         size = "Compression/size/{sample}.{thread}.pprotect.size",
+    shell:
+         """ 
+	 ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' > {output.size}
+	 ls -ltrh {input.pprotect} | awk '{{ print $5  " " $9 }}' >> {output.size}
+
+         md5sum {input.bam} > {output.md5sum}
+         md5sum {input.pprotect} >> {output.md5sum}
+         """
+

@@ -1,0 +1,42 @@
+rule decompress_deez:
+    params:
+        ref = config["ref"],
+    input:
+        deez = "Compression/output/{sample}.{thread}.dz",
+    output: 
+        bam = temp("Compression/tmp/deez/{sample}.{thread}.bam"),
+        movingdone = "Compression/checkpoints/{sample}.{thread}.deez.moving.done",
+    benchmark:
+        "Compression/benchmarks/decompress_deez-{sample}.{thread}.txt"
+    log:
+        "Compression/logs/decompress_deez-{sample}.{thread}.log"
+    shell:
+        """ 
+        deez -r {params.ref} -t {wildcards.thread} {input.deez} -o {output.bam} > {log}
+        touch {output.movingdone}
+        """
+rule decompress_deez_md5sum:
+    params:
+        #final_tmp = config['finaldir'],
+        #final_tmp2 = config['finaldir']+"/"+"deez"
+    input:
+        bam = "Compression/tmp/deez/{sample}.{thread}.bam",
+        #deez = "Compression/output/{sample}.{thread}.dz",
+        #md5sum = "Compression/checksums/{sample}.{thread}-dz.md5sum",
+        size = "Compression/size/{sample}.{thread}.deez.size",
+        movingdone = "Compression/checkpoints/{sample}.{thread}.deez.moving.done",
+    output: 
+        done = "Compression/checkpoints/{sample}.{thread}-deez.done",
+        #outdeez = config["finaldir"]+"/"+"{sample}.{thread}.dz",
+        #outdeez2 = config["finaldir"]+"/"+"deez"+"/"+"{sample}.{thread}.bam",
+    shell:
+        """ 
+	ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' >> {input.size}
+        touch {input.movingdone}
+        touch {output.done}
+        """ 
+        #md5sum {input.bam} >> {input.md5sum}
+        #mv {input.deez} {params.final_tmp}
+        #mv {input.bam} {params.final_tmp2}
+	#rclone touch {output.outdeez}
+	#rclone touch {output.outdeez2}

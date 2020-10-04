@@ -1,0 +1,15 @@
+rule bwa:
+    input:
+        ref = REFGENOME,
+        bwt = '%s.bwt' % REFGENOME,
+        fai = '%s.fai' % REFGENOME,
+        fq1 = FQ[0]
+        fq2 = FQ[1]
+    output:
+        '{sample}.orig.bam'
+    shell:
+        """
+        echo "Running bwa mem"
+        BWA mem  -M {input.ref} {input.fq1} {input.fq2} | SAMTOOLS view -bS - > {output} 
+        echo "Done bwa mem"
+        """

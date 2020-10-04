@@ -1,0 +1,49 @@
+rule decompress_pprotect:
+    params:
+        tmp = "Compression/tmp/pprotect",
+    input:
+        pprotect = "Compression/output/{sample}.{thread}.pgbam_p",
+    output: 
+        bam = temp("Compression/tmp/pprotect/{sample}.{thread}.bam"),
+    benchmark:
+        "Compression/benchmarks/decompress_pprotect-{sample}.{thread}.txt"
+    log:
+        "Compression/logs/decompress_pprotect-{sample}.{thread}.log"
+    shell:
+        """ 
+        petasuite -d --md5match --datasteward {config[data_steward]} -t {wildcards.thread} -D {params.tmp} {input.pprotect} -D {params.tmp}
+        touch {output.bam}
+        """
+
+rule decompress_pprotect_md5sum:
+    input:
+        bam = "Compression/tmp/pprotect/{sample}.{thread}.bam",
+        pprotect = "Compression/output/{sample}.{thread}.pgbam_p",
+        #pprotectbai = "Compression/output/{sample}.{thread}.pgbai",
+        size = "Compression/size/{sample}.{thread}.pprotect.size",
+        md5sum = "Compression/checksums/{sample}.{thread}.pprotect.md5sum",
+    output: 
+        done = "Compression/checkpoints/{sample}.{thread}.pprotect.done",
+        compressed = config["finaldir"]+"/"+"pprotect"+"/"+"compressed"+"/"+"{sample}.{thread}.pgbam_p",
+        #index = config["finaldir"]+"/"+"pprotect"+"/"+"compressed"+"/"+"{sample}.{thread}.pgbai",
+        decompressed = config["finaldir"]+"/"+"pprotect"+"/"+"decompressed"+"/"+"{sample}.{thread}.bam",
+
+    shell:
+        """ 
+        ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' >> {input.size}
+
+	md5sum {input.bam} >> {input.md5sum}
+        
+        echo {output.compressed} | rev | cut -f2- -d'/' | rev | xargs -I {{}} mkdir -p {{}}
+        echo {output.decompressed} | rev | cut -f2- -d'/' | rev | xargs -I {{}} mkdir -p {{}}
+
+        cp {input.pprotect} {output.compressed}
+        cp {input.bam} {output.decompressed}
+
+	rclone touch {output.compressed}
+	rclone touch {output.decompressed}
+
+        touch {output.done} 
+        """ 
+# Stashed commands
+        #cp {input.pprotectbai} {output.index}

@@ -1,0 +1,35 @@
+rule encrypt_crypt4gh:
+    input:
+        expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+        bam = "%s/{sample}.bam" % config["bucket"]
+    output: 
+        c4gh = "Compression/output/{sample}.c4gh",
+	rec_sec = "receiver_{sample}.sec",
+	rec_pub = "receiver_{sample}.pub",
+        sen_sec = "sender_{sample}.sec",
+        sen_pub = "sender_{sample}.pub"
+    benchmark:
+        "Compression/benchmarks/encrypt_c4gh-{sample}.txt"
+    log:
+        "Compression/logs/encrypt_c4gh-{sample}.log"
+    shell:
+         """ 
+	 crypt4gh-keygen --sk {output.sen_sec} --pk {output.sen_pub} --nocrypt
+	 crypt4gh-keygen --sk {output.rec_sec} --pk {output.rec_pub} --nocrypt   
+	 crypt4gh encrypt --sk {output.sen_sec} --recipient_pk {output.rec_pub} < {input.bam} > {output.c4gh}
+         """
+rule compress_c4gh_md5sum:
+    input:
+         expand("/home/Archive/{bucket}", bucket = config["bucket"]),
+         bam = "%s/{sample}.bam" % config["bucket"],
+         c4gh = "Compression/output/{sample}.c4gh",
+    output: 
+         md5sum = "Compression/checksums/{sample}-c4gh.md5sum",
+         size = "Compression/size/{sample}-c4gh.size",
+    shell:
+         """ 
+         md5sum {input.bam} > {output.md5sum}
+         md5sum {input.c4gh} >> {output.md5sum}
+	 ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' > {output.size}
+	 ls -ltrh {input.c4gh} | awk '{{ print $5  " " $9 }}' >> {output.size}
+         """

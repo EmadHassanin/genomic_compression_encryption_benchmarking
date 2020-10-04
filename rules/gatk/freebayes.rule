@@ -1,0 +1,5 @@
+rule freebayes:
+        input:rules.print_reads.out
+        output:{samples}.freebayes.vcf
+        shell:
+                {FREEBAYES} -b {input} -f {REFGENOME} --min-base-quality 20 --min-alternate-qsum 90} >{output}

@@ -1,0 +1,36 @@
+rule decrypt_crypt4gh:
+    params:
+        final_tmp = config['finaldir']
+    input: 
+        rec_sec = "receiver_{sample}.sec",
+        c4gh = "Compression/output/{sample}.c4gh",
+    output: 
+        bam = "Compression/tmp/c4gh/{sample}.bam",
+        movingdone = "Compression/checkpoints/{sample}.c4gh.moving.done",
+        outc4gh = config["finaldir"]+"/"+"{sample}.c4gh"
+    benchmark:
+        "Compression/benchmarks/decrypt_c4gh-{sample}.txt"
+    log:
+        "Compression/logs/decrypt_c4gh-{sample}.log"
+    shell:
+        """ 
+        crypt4gh decrypt --sk {input.rec_sec} < {input.c4gh} > {output.bam}
+        mv {input.c4gh} {params.final_tmp}
+        touch {output.movingdone}
+	rclone touch {output.outc4gh}
+        """
+rule decompress_c4gh_md5sum:
+    input:
+        bam = "Compression/tmp/c4gh/{sample}.bam",
+        md5sum = "Compression/checksums/{sample}-c4gh.md5sum",
+        size = "Compression/size/{sample}-c4gh.size",
+        movingdone = "Compression/checkpoints/{sample}.c4gh.moving.done",
+    output: 
+        done = "Compression/checkpoints/{sample}-c4gh.done"
+    shell:
+        """ 
+        md5sum {input.bam} >> {input.md5sum}
+	ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' >> {input.size}
+        touch {input.movingdone}
+        touch {output.done}
+        """ 

@@ -1,0 +1,33 @@
+import os
+import subprocess
+
+workdir: "/home/Archive"
+
+#from snakemake.remote.HTTP import RemoteProvider as HTTPRemoteProvider
+from snakemake.remote.S3 import RemoteProvider as S3RemoteProvider
+
+S3 = S3RemoteProvider(access_key_id="4424d24526b43f27db22902a842d58c192fbce1a", secret_access_key="28fAABZ44ttVBZ3haeOq13xTGYNeZ8n2GTZjYUfsxRM=")
+
+rule CRAM:
+    input:
+         #HTTP.remote(expand("https://objectstorage.eu-frankfurt-1.oraclecloud.com/n/megeno/b/test/o/{sample}.cram", sample = config["samples"]), keep_local=True),
+         #S3.remote(expand("test/{sample}.cram", sample = config["samples"]), keep_local=True),
+         S3.remote("test/flash.cram", keep_local=True),
+         #expand("compression_{sample}.done", sample = config["samples"])
+    output:
+         "checkpoint/cram.done"
+    shell: 
+         """touch {output}"""
+
+rule read_object:
+    input: 
+        expand("/home/Archive/{bucket}", bucket = config["bucket"])
+    output: 
+        #S3.remote("test/{sample}.cram", keep_local=True),
+        S3.remote("test/flash.cram", keep_local=True),
+        #"compression_{sample}.done"
+    shell:
+         """
+         """
+
+

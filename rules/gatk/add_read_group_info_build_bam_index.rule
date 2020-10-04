@@ -1,0 +1,12 @@
+rule add_read_group_info_build_bam_index:
+    input:
+        '{sample}.addrg_reads.bam'
+    output:
+        "{sample}.out"
+    log:
+        LOG
+    shell:
+        """
+        java -jar PICARD BuildBamIndex INPUT={input} 1>> {wildcards.sample}.out
+        echo "Done adding read group info"
+        """

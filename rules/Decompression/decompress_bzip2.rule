@@ -1,0 +1,37 @@
+rule decompress_bzip2:
+    params:
+        ref = config["ref"],
+        final_tmp = config['finaldir']
+    input:
+        bzip2 = "Compression/output/{sample}.bzip2",
+    output: 
+        bam = temp("Compression/tmp/bzip2/{sample}.bam"),
+        movingdone = "Compression/checkpoints/{sample}.bzip2.moving.done",
+        outbzip2 = config["finaldir"]+"/"+"{sample}.bzip2"
+    benchmark:
+        "Compression/benchmarks/decompress_bzip2-{sample}.txt"
+    log:
+        "Compression/logs/decompress_bzip2-{sample}.log"
+    shell:
+        """ 
+        bzip2 -d -k {input.bzip2} -c > {output.bam}
+        mv {input.bzip2} {params.final_tmp}
+        touch {output.movingdone}
+	rclone touch {output.outbzip2}
+        """
+
+rule decompress_bzip2_md5sum:
+    input:
+        bam = "Compression/tmp/bzip2/{sample}.bam",
+        md5sum = "Compression/checksums/{sample}.bzip2.md5sum",
+        size = "Compression/size/{sample}.bzip2.size",
+        movingdone = "Compression/checkpoints/{sample}.bzip2.moving.done",
+    output: 
+        done = "Compression/checkpoints/{sample}.bzip2.done"
+    shell:
+        """ 
+        md5sum {input.bam} >> {input.md5sum}
+	ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' >> {input.size}
+        touch {input.movingdone}
+        touch {output.done}
+        """ 

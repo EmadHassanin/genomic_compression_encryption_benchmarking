@@ -1,0 +1,11 @@
+rule build_bwa_index:
+    input:
+        REFGENOME
+    output:
+        '%s.bwt' % REFGENOME
+    log:
+        LOG
+    shell:
+        """
+        bwa index -a bwtsw {input}
+        """

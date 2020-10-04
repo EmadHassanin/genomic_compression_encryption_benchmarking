@@ -1,0 +1,35 @@
+infrastructure: "oci"
+bucket: "Data"
+namespace: "megeno"
+ref: "/references/human_g1k_v37_decoy.fasta"
+finaldir: "/home/Archive/Data/results"
+data_steward: "Megeno"
+
+# This is for testing full size BAM files
+samples:
+    - "simonsSS6004478.srt.aln" # Uncomment if the threaded benchmarking was not tested
+    #- "RMNISTHS_30xdownsample"
+    #- "NIST-hg001-7001-b-ready"
+    #- "NA12890_S1"
+threads:
+    - 4
+
+# These were written to dynamically add tools into the pipeline. Did not test it yet.
+tools:
+    - "cram"
+    - "petagene"
+    - "pprotect"
+    - "quip"
+    - "deez"
+    - "scramble"
+    - "gzip"
+    - "bzip2"
+    - "cryfa"
+    - "c4gh"
+    - "zip"
+    - "cpt"
+    - "dat"
+    - "gpg"
+    - "pigz"
+    - "pbzip2"
+    - "lz4"

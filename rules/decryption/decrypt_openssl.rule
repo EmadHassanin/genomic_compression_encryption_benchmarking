@@ -1,0 +1,38 @@
+rule decrypt_openssl:
+    params:
+        ref = config["ref"],
+        final_tmp = config['finaldir']
+	
+    input: 
+        key = "{sample}.key",
+        openssl = "Compression/output/{sample}.dat",
+    output: 
+        bam = "Compression/tmp/openssl/{sample}.bam",
+        movingdone = "Compression/checkpoints/{sample}.dat.moving.done",
+        outdat = config["finaldir"]+"/"+"{sample}.dat"
+    benchmark:
+        "Compression/benchmarks/decrypt_openssl-{sample}.txt"
+    log:
+        "Compression/logs/decrypt_openssl-{sample}.log"
+    shell:
+        """ 
+	openssl enc -d -base64 -kfile {input.key} -in {input.openssl} -out {output.bam}
+        mv {input.openssl} {params.final_tmp}
+        touch {output.movingdone}
+	rclone touch {output.outdat}
+        """
+rule decompress_openssl_md5sum:
+    input:
+        bam = "Compression/tmp/openssl/{sample}.bam",
+        md5sum = "Compression/checksums/{sample}-openssl.md5sum",
+        size = "Compression/size/{sample}-openssl.size",
+        movingdone = "Compression/checkpoints/{sample}.dat.moving.done",
+    output: 
+        done = "Compression/checkpoints/{sample}-dat.done"
+    shell:
+        """ 
+        md5sum {input.bam} >> {input.md5sum}
+	ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' >> {input.size}
+        touch {input.movingdone}
+        touch {output.done}
+        """ 

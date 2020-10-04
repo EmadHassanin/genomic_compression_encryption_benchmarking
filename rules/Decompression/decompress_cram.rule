@@ -1,0 +1,46 @@
+rule decompress_cram:
+    params:
+        ref = config["ref"],
+    input:
+        cram = "Compression/output/{sample}.{thread}.cram",
+    output: 
+        bam = temp("Compression/tmp/cram/{sample}.{thread}.bam"),
+        movingdone = "Compression/checkpoints/{sample}.{thread}.cram.moving.done",
+    benchmark:
+        "Compression/benchmarks/decompress_cram-{sample}.{thread}.txt"
+    log:
+        "Compression/logs/decompress_cram-{sample}.{thread}.log"
+    shell:
+        """ 
+        ADD_THREAD=`expr {wildcards.thread} - 1`
+        echo "Running with {wildcards.thread}"
+        echo "Additional threads: $ADD_THREAD"
+
+        samtools view -@ $ADD_THREAD -b {input.cram} > {output.bam} 2> {log}
+        touch {output.movingdone}
+        """
+rule decompress_cram_md5sum:
+    params:
+        #final_tmp = config['finaldir'],
+        #final_tmp2 = config['finaldir']+"/"+"cram"
+    input:
+        bam = "Compression/tmp/cram/{sample}.{thread}.bam",
+        #cram = "Compression/output/{sample}.{thread}.cram",
+        #md5sum = "Compression/checksums/{sample}.{thread}-cram.md5sum",
+        size = "Compression/size/{sample}.{thread}-cram.size",
+        movingdone = "Compression/checkpoints/{sample}.{thread}.cram.moving.done",
+    output: 
+        done = "Compression/checkpoints/{sample}.{thread}-cram.done",
+        #outcram = temp(config["finaldir"]+"/"+"{sample}.{thread}.cram"),
+        #outcram2 = config["finaldir"]+"/"+"cram"+"/"+"{sample}.{thread}.bam",
+    shell:
+        """ 
+	ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' >> {input.size}
+        touch {input.movingdone}
+        touch {output.done}
+        """
+	#md5sum {input.bam} >> {input.md5sum}
+        #mv {input.cram} {params.final_tmp}
+        #mv {input.bam} {params.final_tmp2}
+	#rclone touch {output.outcram}
+	#rclone touch {output.outcram2}

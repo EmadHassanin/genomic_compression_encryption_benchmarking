@@ -1,0 +1,1 @@
+java -Xmx16g -jar {$basedir}/tools/abra-0.96/abra.jar", "--no-debug --in $tmp_bam2 --out $tmp_bam3 --targets $roi --threads $threads --working $tmp_folder --ref $genome", true

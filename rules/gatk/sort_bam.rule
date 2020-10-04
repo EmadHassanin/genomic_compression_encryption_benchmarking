@@ -1,0 +1,13 @@
+rule sort_bam:
+    input:
+        '{sample}.orig.bam'
+    output:
+        '{sample}.sorted.bam'
+    log:
+        LOG
+    shell:
+        """
+        echo "Sorting file"
+        java -jar PICARD SortSam INPUT={input} OUTPUT={output} SORT_ORDER=coordinate VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=TRUE TMP_DIR=%s
+        echo "Done sorting"
+        """ % TMPDIR

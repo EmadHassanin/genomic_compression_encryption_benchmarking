@@ -1,0 +1,42 @@
+rule decrypt_cryfa:
+    params:
+        ref = config["ref"],	
+        final_tmp = config['finaldir']
+    input: 
+        key = "{sample}.key",
+        cryfa = "Compression/output/{sample}.{thread}.cryfa"
+    output: 
+        bam = temp("Compression/tmp/cryfa/{sample}.{thread}.bam"),
+        movingdone = "Compression/checkpoints/{sample}.{thread}.cryfa.moving.done",
+        outcryfa = config["finaldir"]+"/"+"{sample}.{thread}.cryfa"
+    benchmark:
+        "Compression/benchmarks/decrypt_cryfa-{sample}.{thread}.txt"
+    log:
+        "Compression/logs/decrypt_cryfa-{sample}.{thread}.log"
+    shell:
+        """ 
+        ADD_THREAD=`expr {wildcards.thread} - 1`
+        echo "Running with {wildcards.thread}"
+        echo "Additional threads: $ADD_THREAD"
+
+	cryfa -k {input.key} -t $ADD_THREAD -d {input.cryfa} > {output.bam}
+        mv {input.cryfa} {params.final_tmp}
+        touch {output.movingdone}
+	rclone touch {output.outcryfa}
+        """
+rule decompress_cryfa_md5sum:
+    input:
+        bam = "Compression/tmp/cryfa/{sample}.{thread}.bam",
+        md5sum = "Compression/checksums/{sample}.{thread}-cryfa.md5sum",
+        size = "Compression/size/{sample}.{thread}-cryfa.size",
+        movingdone = "Compression/checkpoints/{sample}.{thread}.cryfa.moving.done",
+    output: 
+        done = "Compression/checkpoints/{sample}.{thread}-cryfa.done"
+    shell:
+        """ 
+        md5sum {input.bam} >> {input.md5sum}
+	ls -ltrh {input.bam} | awk '{{ print $5  " " $9 }}' >> {input.size}
+        touch {input.movingdone}
+        touch {output.done}
+        """ 
+
