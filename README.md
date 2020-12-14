@@ -101,7 +101,7 @@ You should have all the necessary files required. Now, load the environment and 
 source activate py36
 ```
 
-You then need to install Petagene suite by following instructions.
+
 
 **NOTE**: For now, we decided to use only `python 3`. 
 
