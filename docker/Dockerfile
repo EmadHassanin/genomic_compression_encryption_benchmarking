@@ -70,22 +70,6 @@ RUN wget https://sourceforge.net/projects/staden/files/io_lib/1.14.9/io_lib-1.14
     && make install \
     && ldconfig -v 
 
-##############################
-# Install Petasuite Protect  #
-##############################
-
-## These are some of the erlier versions of petasuite that we tested
-#RUN wget -O petasuite-cloud-edition_1.2.6p5_amd64.run 'https://lm.petagene.com/cgi/download.cgi?filename=petasuite-cloud-edition_1.2.6p5_amd64.run&cookie=b01a24f7fbab420ea60ad223c67d0446' \
-#RUN wget -O petasuite-cloud-edition_1.2.6p10_amd64.run 'https://lm.petagene.com/cgi/download.cgi?filename=petasuite-cloud-edition_1.2.6p10_amd64.run&cookie=b01a24f7fbab420ea60ad223c67d0446' \
-#
-RUN wget -O petasuite-cloud-edition_protect_1.3.0p2.bffb9c227.CLOUD_amd64.run 'https://lm.petagene.com/cgi/download.cgi?filename=petasuite-cloud-edition_protect_1.3.0p2.bffb9c227.CLOUD_amd64.run&cookie=b01a24f7fbab420ea60ad223c67d0446' \
-    && mv petasuite-cloud-edition_protect_1.3.0p2.bffb9c227.CLOUD_amd64.run /tmp \
-    && cd /tmp \
-    && chmod u+x /tmp/petasuite-cloud-edition_protect_1.3.0p2.bffb9c227.CLOUD_amd64.run \
-    && yes | MORE="-c 100000" /tmp/petasuite-cloud-edition_protect_1.3.0p2.bffb9c227.CLOUD_amd64.run --nox11 \
-    && apt-get update \
-    && gdebi -n /tmp/petasuite-cloud-edition_1.3.0p2_amd64/petasuite-cloud-edition_1.3.0p2_amd64.deb
-
 
 # LZ4
 RUN git clone https://github.com/lz4/lz4.git \ 
@@ -117,7 +101,7 @@ RUN pip install git+https://github.com/EGA-archive/crypt4gh.git
 ENV PATH PATH /opt/conda/bin:/opt/conda/envs/compression/bin/:/deez:/cryfa:$PATH
     
 # Add Petasuite credentials (and Petasuite Protect)
-ENV PETASUITE_REFPATH /references:/opt/petagene/petasuite/species
+
 
 ENV KMS_URL https://130.61.57.75:50050
 
