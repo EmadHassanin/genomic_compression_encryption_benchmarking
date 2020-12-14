@@ -16,7 +16,6 @@ Access
 |____rules
 | |____BAM
 | |____CRAM
-| |____Petagene
 |____.gitlab-ci.yaml
 |____conf
 |____reports
@@ -162,11 +161,6 @@ conda activate compression
 ## Dry run for everything
 ```
 snakemake -npks workflow/master.workflow --configfile config/oci_config Compression/checkpoints/all.done
-```
-
-## Dry run for only petagene
-```
-snakemake -npks workflow/master.workflow --configfile config/oci_config Compression/checkpoints/petagene.done
 ```
 
 ## Dry run for only cram
